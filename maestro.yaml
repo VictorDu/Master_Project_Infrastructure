@@ -50,3 +50,19 @@ services:
                     BROKER_ID: 1
                     NUM_PARTITIONS: 3 
                     ZOOKEEPER_SERVER_IDS: 'node1,node2'
+    producer:
+        image: 20-maestro-kafka-producer:latest
+        requires: [ kafka ]
+        env:
+            KAFKA_INFO: 192.168.0.106:9092,192.168.0.104:9092
+        instances:
+            producer1:
+                ship: docker-zk-1
+    consumer:
+        image: 20-maestro-kafka-consumer:latest
+        requires: [ kafka ]
+        env:
+            KAFKA_INFO: 192.168.0.106:2181,192.168.0.104:2181
+        instances:
+            consumer1:
+                ship: docker-zk-1

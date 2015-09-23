@@ -7,6 +7,7 @@ MAINTAINER Wentao Du <vdu@snaplogic.com>
 RUN echo /etc/issue
 RUN apt-get -y update
 RUN apt-get -y install vim git tar unzip wget python-setuptools
+RUN apt-get -y install software-properties-common python-software-properties
 
 # Install maestro ng lib
 RUN apt-get -y install build-essential autoconf libtool pkg-config python-opengl python-imaging python-pyrex python-pyside.qtopengl idle-python2.7 qt4-dev-tools qt4-designer libqtgui4 libqtcore4 libqt4-xml libqt4-test libqt4-script libqt4-network libqt4-dbus python-qt4 python-qt4-gl libgle3 python-dev
