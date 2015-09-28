@@ -9,7 +9,7 @@ RUN pip install kazoo && apt-get clean iputils-ping
 RUN wget -q -O - http://mirrors.sonic.net/apache/zookeeper/zookeeper-3.4.6/zookeeper-3.4.6.tar.gz  | tar -C /opt -xz
 
 ADD run-zookeeper.py /opt/zookeeper-3.4.6/.docker/            
-RUN mkdir -p /var/docker-share
+#RUN mkdir -p /var/docker-share
 
 WORKDIR /opt/zookeeper-3.4.6/.docker/
 VOLUME /var/docker-share
