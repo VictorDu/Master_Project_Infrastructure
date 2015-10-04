@@ -1,3 +1,5 @@
+__maestro:
+  schema: 2
 name: Master_Project_Infarstructure
 {%- set zookeeper_share_host = '/root/Master_Project/Master_Project_Infrastructure/docker_share' %}
 {%- set zookeeper_share_docker = '/var/docker-share' %}
@@ -70,7 +72,7 @@ services:
     image: 20-maestro-hadoop:latest
     instances:
       slave1:
-        ports: {client: 8088, peer: 9000, ssh: 2122}
+        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090}
         ship: docker-zk-2
   spark-master:
     image: 30-maestro-hadoop-master:latest 
@@ -79,5 +81,5 @@ services:
       SLAVE_IP: 192.168.0.105
     instances:
       master:
-        ports: {client: 8088, peer: 9000, ssh: 2122}
+        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090}
         ship: docker-zk-1
