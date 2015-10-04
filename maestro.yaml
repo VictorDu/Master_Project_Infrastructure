@@ -83,3 +83,15 @@ services:
       master:
         ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090}
         ship: docker-zk-1
+  hadoop-single:
+    image: 30-maestro-hadoop-single:latest
+    instances:
+      Master: 
+        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090, namenode: 50070, jT: 5431, sa: 8035, rt: 8025, rm: 8050, abc: 8031  }
+        ship: docker-zk-1
+  hadoop-slave:
+    image: 20-maestro-hadoop:latest
+    instances:
+      Slave: 
+        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090, namenode: 50070, jT: 5431, sa: 8035, rt: 8025, rm: 8050, abc: 8031  }
+        ship: docker-zk-2
