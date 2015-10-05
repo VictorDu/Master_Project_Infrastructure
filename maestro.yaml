@@ -16,7 +16,7 @@ services:
         ship: docker-zk-1
         ports: {client: 2181, peer: 2888, leader_election: 3888}
         volumes:
-          /tmp: /var/ocker-share
+          /tmp: /var/docker-share
         env:
           ZOOKEEPER_TICKTIME: 2000
           ZOOKEEPER_DATADIR: {{ zookeeper_share_docker }}/v1
@@ -49,7 +49,7 @@ services:
         ship: docker-zk-2
         ports: {broker: 9092}
         env:
-          BROKER_ID: 1
+          BROKER_ID: 2
           NUM_PARTITIONS: 3 
           ZOOKEEPER_SERVER_IDS: 'node1,node2'
   producer:
