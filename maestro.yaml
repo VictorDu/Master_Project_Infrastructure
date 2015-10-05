@@ -93,5 +93,13 @@ services:
     image: 20-maestro-hadoop:latest
     instances:
       Slave: 
-        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090, namenode: 50070, jT: 5431, sa: 8035, rt: 8025, rm: 8050, abc: 8031  }
+        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090, namenode: 50070, jT: 5431, sa: 8035, rt: 8025, rm: 8050, abc: 8031, task: 50010, nodeHttp: 8042, yarn: 40000, a: 10020, b: 19888, c: 10022, d: 8020, e: 50075, f: 50020, wa: 50100, wb: 50101, wc: 50102, we : 50104, wf: 50105, wg: 50106, wh: 50107, wi: 50108, wj: 50109, wk: 50110} 
         ship: docker-zk-2
+  hadoop-master:
+    image: 30-maestro-hadoop-multinode-master:latest
+    env:
+      SLAVE_IP: 192.168.0.105
+    instances:
+      Master: 
+        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090, namenode: 50070, jT: 5431, sa: 8035, rt: 8025, rm: 8050, abc: 8031, task: 50010, nodeHttp: 8042, yarn: 40000, a: 10020, b: 19888, c: 10022, d: 8020, e: 50075, f: 50020, wa: 50100, wb: 50101, wc: 50102, we : 50104, wf: 50105, wg: 50106, wh: 50107, wi: 50108, wj: 50109, wk: 50110} 
+        ship: docker-zk-1

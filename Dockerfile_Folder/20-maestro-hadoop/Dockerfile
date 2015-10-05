@@ -50,8 +50,8 @@ RUN cp $HADOOP_PREFIX/etc/hadoop/*.xml $HADOOP_PREFIX/input
 #RUN $HADOOP_PREFIX/bin/hdfs namenode -format
 
 # fixing the libhadoop.so like a boss
-#RUN rm  /usr/local/hadoop/lib/native/*
-#RUN curl -Ls http://dl.bintray.com/sequenceiq/sequenceiq-bin/hadoop-native-64-2.6.0.tar|tar -x -C /usr/local/hadoop/lib/native/
+RUN rm  /usr/local/hadoop/lib/native/*
+RUN curl -Ls http://dl.bintray.com/sequenceiq/sequenceiq-bin/hadoop-native-64-2.6.0.tar|tar -x -C /usr/local/hadoop/lib/native/
 
 ADD ssh_config /root/.ssh/config
 RUN chmod 600 /root/.ssh/config
