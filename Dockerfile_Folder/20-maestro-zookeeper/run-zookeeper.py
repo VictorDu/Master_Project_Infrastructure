@@ -56,9 +56,11 @@ if os.environ.get('ZOOKEEPER_SERVER_IDS'):
 #        conf['server.{}'.format(id)] = build_node_repr(node)
         if node == get_container_name():
             ZOOKEEPER_NODE_ID = id
-os.mkdir(os.environ.get('ZOOKEEPER_DATADIR'))
-
-with open(os.path.join(os.environ.get('ZOOKEEPER_DATADIR'), 'myid'), 'w+') as f:
+#os.mkdir(os.environ.get('ZOOKEEPER_DATADIR'))
+myid_path = os.path.join(os.environ.get('ZOOKEEPER_DATADIR'), 'myid')
+if os.path.isfile(myid_path):
+    os.remove(myid_path)
+with open(myid_path, 'w+') as f:
         f.write('%s\n' % ZOOKEEPER_NODE_ID)
 
 with open (ZOOKEEPER_CONFIG_FILE, "r") as myfile:
