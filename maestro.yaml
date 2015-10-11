@@ -1,39 +1,41 @@
 __maestro:
   schema: 2
-name: Master_Project_Infarstructure
-{%- set zookeeper_share_host = '/root/Master_Project/Master_Project_Infrastructure/docker_share' %}
-{%- set zookeeper_share_docker = '/var/docker-share' %}
+{%- set name = 'Master_Project_Infarstructure' %}
+name: {{ name }}
+{%- set share_host = '/root/docker-share' %}
+{%- set share_docker = '/var/docker-share' %}
 ships:
-  docker-zk-1:
-    ip: 192.168.0.106
-  docker-zk-2:
-    ip: 192.168.0.105
+  docker-container-1: {ip: 192.168.0.106, docker_port: 2375 , timeout: 15}
+  docker-container-2: {ip: 192.168.0.105, docker_port: 2375 , timeout: 15}
+  docker-container-3: {ip: 192.168.0.107, docker_port: 2375 , timeout: 15}
 services:
+  {%- with servers = {'ship': [('docker-container-1', 1), ('docker-container-2', 2), ('docker-container-3', 3)]} %}
   zookeeper:
-    image: 20-maestro-zookeeper:latest 
+    image: 20-maestro-zookeeper:latest
+    {%- set zookeeper_share_host = {{ share_host }}/zookeeper %}
+    {%- set zookeeper_share_docker = {{ share_docker }}/zookeeper %}
+    env:
+      {%- set serverids = [] %}
+      {%- for ship, broker in servers.items() %}
+        {%- set DO = serverids.append('{}:{}'.format(ship, broker)) %}
+      {%- endfor %}
+      {%- if serverids|length > 1 %}
+      ZOOKEEPER_SERVER_IDS: {{ serverids|join(',') }}
+      {%- endif %}
+      ZOOKEEPER_TICKTIME: 2000
+      ZOOKEEPER_CLIENTPORT: 2181 
     instances:
-      node1:
-        ship: docker-zk-1
+    {%- for ship, broker in servers.items() %}
+      zookeeper{{ ship }}:
+        ship: {{ ship }}
         ports: {client: 2181, peer: 2888, leader_election: 3888}
         volumes:
-          /root/shareFolder/zookeeper/v1: /var/docker-share/v1
-          /root/shareFolder/zookeeper/log1: /var/log/zookeeper
+          {{ zookeeper_share_host }}/v{{ broker }}: {{ zookeeper_share_docker }}/v{{ broker }}
+          {{ zookeeper_share_host }}/log{{ broker }}: /var/log/zookeeper
         env:
-          ZOOKEEPER_TICKTIME: 2000
-          ZOOKEEPER_DATADIR: {{ zookeeper_share_docker }}/v1
-          ZOOKEEPER_CLIENTPORT: 2181 
-          ZOOKEEPER_SERVER_IDS: 'node1:1,node2:2'
-      node2:
-        ship: docker-zk-2
-        ports: {client: 2181, peer: 2888, leader_election: 3888}
-        volumes:
-          /root/shareFolder/zookeeper/v2: /var/docker-share/v2
-          /root/shareFolder/zookeeper/log2: /var/log/zookeeper
-        env:
-          ZOOKEEPER_TICKTIME: 2000
-          ZOOKEEPER_DATADIR: {{ zookeeper_share_docker }}/v2
-          ZOOKEEPER_CLIENTPORT: 2181 
-          ZOOKEEPER_SERVER_IDS: 'node1:1,node2:2'
+          ZOOKEEPER_DATADIR: {{ zookeeper_share_docker }}/v{{ broker }}
+    {%- endfor %}
+  {%- endwith %}  
   kafka:
     image: 20-maestro-kafka:latest
     requires: [ zookeeper ]
