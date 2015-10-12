@@ -17,7 +17,8 @@ from maestro.guestutils import get_container_name, \
     get_port, \
     get_service_name, \
     get_specific_host, \
-    get_specific_port
+    get_specific_port, \
+    _get_service_instance_names
 
 # Setup logging for Kazoo.
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
@@ -32,7 +33,9 @@ def getKafkaZookeeperNode(name):
         get_specific_port('zookeeper', name, 'client'))
     
 def getKafkaZookeeper():
-    servers = os.environ['ZOOKEEPER_SERVER_IDS'].split(',')
+    servers = _get_service_instance_names('zookeeper')
+    print servers
+#    servers = os.environ['ZOOKEEPER_SERVER_IDS'].split(',')
     return ','.join(map(getKafkaZookeeperNode, servers))
 
 KAFKA_CONFIG_FILE = os.path.join('config', 'server.properties')
@@ -61,7 +64,7 @@ KAFKA_LOGGING_TEMPLATE = """# Log4j configuration, logs to rotating file
 log4j.rootLogger=INFO,R
 
 log4j.appender.R=org.apache.log4j.RollingFileAppender
-log4j.appender.R.File=/var/log/%(service_name)s/%(container_name)s.log
+log4j.appender.R.File=/var/docker-share/kafka/%(container_name)s.log
 log4j.appender.R.MaxFileSize=100MB
 log4j.appender.R.MaxBackupIndex=10
 log4j.appender.R.layout=org.apache.log4j.PatternLayout
@@ -86,7 +89,6 @@ with open(KAFKA_CONFIG_FILE, 'w+') as conf:
 
 # Setup the logging configuration.
 logging_model = {
-    'service_name': 'ZOOKEEPER',
     'container_name': get_container_name(),
     'log_pattern': LOG_PATTERN
 }
@@ -111,7 +113,9 @@ def ensure_kafka_zk_path(retries=1):
             zk.stop()
     return False
 
-if not ensure_kafka_zk_path(retries = int(os.environ.get('NODE_NUMBER',1))):
+node_number = get_node_list('kafka')
+print node_number
+if not ensure_kafka_zk_path(retries = len(node_number)):
     sys.stderr.write('Could not create the base ZooKeeper path for Kafka!\n')
     sys.exit(1)
 

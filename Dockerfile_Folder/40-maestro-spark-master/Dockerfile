@@ -16,5 +16,6 @@ RUN tar -zxvf spark-1.5.1-bin-hadoop2.6.tgz -C /usr/local/spark/
 ADD spark-env-addition.sh /var/
 RUN cp /usr/local/spark/spark-1.5.1-bin-hadoop2.6/conf/spark-env.sh.template /usr/local/spark/spark-1.5.1-bin-hadoop2.6/conf/spark-env.sh
 RUN cat /var/spark-env-addition.sh >> /usr/local/spark/spark-1.5.1-bin-hadoop2.6/conf/spark-env.sh
-ADD 25-config-spark.sh /opt/setup/scripts/
+#ADD 25-config-spark.sh /opt/setup/scripts/
+ADD 25-config-spark.py /opt/setup/scripts/
 ADD 35-start-spark.sh /opt/setup/scripts/

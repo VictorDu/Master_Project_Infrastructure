@@ -5,113 +5,74 @@ name: {{ name }}
 {%- set share_host = '/root/docker-share' %}
 {%- set share_docker = '/var/docker-share' %}
 ships:
-  docker-container-1: {ip: 192.168.0.106, docker_port: 2375 , timeout: 15}
-  docker-container-2: {ip: 192.168.0.105, docker_port: 2375 , timeout: 15}
-  docker-container-3: {ip: 192.168.0.107, docker_port: 2375 , timeout: 15}
+  dc-1: {ip: 192.168.0.106, docker_port: 2375 , timeout: 15}
+  dc-2: {ip: 192.168.0.105, docker_port: 2375 , timeout: 15} 
+  dc-3: {ip: 192.168.0.107, docker_port: 2375 , timeout: 15}
 services:
-  {%- with servers = {'ship': [('docker-container-1', 1), ('docker-container-2', 2), ('docker-container-3', 3)]} %}
+  {%- with servers = [('dc-1', 1), ('dc-2', 2), ('dc-3', 3)] %}
   zookeeper:
     image: 20-maestro-zookeeper:latest
-    {%- set zookeeper_share_host = {{ share_host }}/zookeeper %}
-    {%- set zookeeper_share_docker = {{ share_docker }}/zookeeper %}
+    {%- set zookeeper_share_host = share_host + '/zookeeper' %}
+    {%- set zookeeper_share_docker = share_host + '/zookeeper' %}
     env:
       {%- set serverids = [] %}
-      {%- for ship, broker in servers.items() %}
-        {%- set DO = serverids.append('{}:{}'.format(ship, broker)) %}
+      {%- for ship, zookeeper_id in servers %}
+        {%- set DO = serverids.append('{}:{}'.format("zookeeper-"+ship, zookeeper_id)) %}
       {%- endfor %}
       {%- if serverids|length > 1 %}
       ZOOKEEPER_SERVER_IDS: {{ serverids|join(',') }}
       {%- endif %}
       ZOOKEEPER_TICKTIME: 2000
-      ZOOKEEPER_CLIENTPORT: 2181 
+      ZOOKEEPER_CLIENTPORT: 2181
     instances:
-    {%- for ship, broker in servers.items() %}
-      zookeeper{{ ship }}:
+    {%- for ship, zookeeper_id in servers %}
+      zookeeper-{{ ship }}:
         ship: {{ ship }}
         ports: {client: 2181, peer: 2888, leader_election: 3888}
         volumes:
-          {{ zookeeper_share_host }}/v{{ broker }}: {{ zookeeper_share_docker }}/v{{ broker }}
-          {{ zookeeper_share_host }}/log{{ broker }}: /var/log/zookeeper
+          {{ zookeeper_share_host }}/v{{ zookeeper_id }}: {{ zookeeper_share_docker }}/v{{ zookeeper_id }}
+          {{ zookeeper_share_host }}/log{{ zookeeper_id }}: /var/log/zookeeper
         env:
-          ZOOKEEPER_DATADIR: {{ zookeeper_share_docker }}/v{{ broker }}
+          ZOOKEEPER_DATADIR: {{ zookeeper_share_docker }}/v{{ zookeeper_id }}
     {%- endfor %}
   {%- endwith %}  
+
+  {%- with servers = [('dc-1', 1), ('dc-2', 2), ('dc-3', 3)] %}
+  {%- set kafka_share_host = share_host + '/kafka' %}
+  {%- set kafka_share_docker = share_host + '/kafka' %}
   kafka:
     image: 20-maestro-kafka:latest
     requires: [ zookeeper ]
     env:
-      NODE_NUMBER: 2
+      NUM_PARTITIONS: 3
     instances:
-      kafka1:
-        ship: docker-zk-1
+    {%- for ship, broker in servers %}
+      kafka-{{ ship }}:
+        ship: {{ ship }}
         ports: {broker: 9092}
+        volumes:
+          {{ kafka_share_host }}/broker{{ broker }}: {{ kafka_share_docker }}
         env:
-          BROKER_ID: 1
-          NUM_PARTITIONS: 3 
-          ZOOKEEPER_SERVER_IDS: 'node1,node2'
-      kafka2:
-        ship: docker-zk-2
-        ports: {broker: 9092}
-        env:
-          BROKER_ID: 2
-          NUM_PARTITIONS: 3 
-          ZOOKEEPER_SERVER_IDS: 'node1,node2'
-  producer:
-    image: 20-maestro-kafka-producer:latest
-    requires: [ kafka ]
-    env:
-      KAFKA_INFO: 192.168.0.106:9092,192.168.0.105:9092
-    instances:
-      producer1:
-        ship: docker-zk-1
-  consumer:
-    image: 20-maestro-kafka-consumer:latest
-    requires: [ kafka ]
-    env:
-      KAFKA_INFO: 192.168.0.106:2181,192.168.0.105:2181
-    instances:
-      consumer1:
-        ship: docker-zk-1
-  spark-slave:
-    image: 20-maestro-hadoop:latest
-    instances:
-      slave1:
-        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090}
-        ship: docker-zk-2
-  spark-master:
-    image: 30-maestro-hadoop-master:latest 
-    requires: [ spark-slave]
-    env:
-      SLAVE_IP: 192.168.0.105
-    instances:
-      master:
-        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090}
-        ship: docker-zk-1
-  hadoop-single:
-    image: 30-maestro-hadoop-single:latest
-    instances:
-      Master: 
-        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090, namenode: 50070, jT: 5431, sa: 8035, rt: 8025, rm: 8050, abc: 8031  }
-        ship: docker-zk-1
+          BROKER_ID: {{ broker }}
+    {%- endfor %}
+  {%- endwith %}  
+  
+  {%- with servers = ['dc-2', 'dc-3'] %}
   hadoop-slave:
     image: 20-maestro-hadoop:latest
+    requires: [ kafka ]
     instances:
-      Slave: 
-        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090, namenode: 50070, jT: 5431, sa: 8035, rt: 8025, rm: 8050, abc: 8031, task: 50010, nodeHttp: 8042, yarn: 40000, a: 10020, b: 19888, c: 10022, d: 8020, e: 50075, f: 50020, wa: 50100, wb: 50101, wc: 50102, we : 50104, wf: 50105, wg: 50106, wh: 50107, wi: 50108, wj: 50109, wk: 50110, spark: 8080, spark2: 7077, spark3: 6066} 
-        ship: docker-zk-2
-  hadoop-master:
-    image: 30-maestro-hadoop-multinode-master:latest
-    env:
-      SLAVE_IP: 192.168.0.105
-    instances:
-      Master: 
-        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090, namenode: 50070, jT: 5431, sa: 8035, rt: 8025, rm: 8050, abc: 8031, task: 50010, nodeHttp: 8042, yarn: 40000, a: 10020, b: 19888, c: 10022, d: 8020, e: 50075, f: 50020, wa: 50100, wb: 50101, wc: 50102, we : 50104, wf: 50105, wg: 50106, wh: 50107, wi: 50108, wj: 50109, wk: 50110} 
-        ship: docker-zk-1
-  spark-master-2:
+    {%- for ship in servers %}
+      slave-{{ ship }}:
+        ship: {{ ship }}
+        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090, namenode: 50070, jT: 5431, sa: 8035, rt: 8025, rm: 8050, abc: 8031, task: 50010, nodeHttp: 8042, yarn: 40000, a: 10020, b: 19888, c: 10022, d: 8020, e: 50075, f: 50020, wa: 50100, wb: 50101, wc: 50102, we : 50104, wf: 50105, wg: 50106, wh: 50107, wi: 50108, wj: 50109, wk: 50110, spark: 8080, spark2: 7077, spark3: 6066}
+    {%- endfor %}
+  {%- endwith %}
+
+  spark-master:
     image: 40-maestro-spark-master:latest
-    env:
-      SLAVE_IP: 192.168.0.105
+    requires: [ hadoop-slave ]
     instances:
-      Master: 
-        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090, namenode: 50070, jT: 5431, sa: 8035, rt: 8025, rm: 8050, abc: 8031, task: 50010, nodeHttp: 8042, yarn: 40000, a: 10020, b: 19888, c: 10022, d: 8020, e: 50075, f: 50020, wa: 50100, wb: 50101, wc: 50102, we : 50104, wf: 50105, wg: 50106, wh: 50107, wi: 50108, wj: 50109, wk: 50110, spark: 8080, spark2: 7077, spark3: 6066} 
-        ship: docker-zk-1
+      Master:
+        ship: dc-1
+        ports: {client: 8088, peer: 9000, ssh: 2122, secondary: 50090, namenode: 50070, jT: 5431, sa: 8035, rt: 8025, rm: 8050, abc: 8031, task: 50010, nodeHttp: 8042, yarn: 40000, a: 10020, b: 19888, c: 10022, d: 8020, e: 50075, f: 50020, wa: 50100, wb: 50101, wc: 50102, we : 50104, wf: 50105, wg: 50106, wh: 50107, wi: 50108, wj: 50109, wk: 50110, spark: 8080, spark2: 7077, spark3: 6066}
