@@ -6,7 +6,7 @@ RUN apt-get -y install netcat-traditional netcat-openbsd nmap
 RUN pip install kazoo && apt-get clean iputils-ping
 
 
-RUN wget http://www.webhostingjams.com/mirror/apache//kafka/0.8.2.0/kafka_2.10-0.8.2.0.tgz
+RUN wget http://apache.cs.utah.edu/kafka/0.8.2.0/kafka_2.10-0.8.2.0.tgz
 RUN tar -xzf kafka_2.10-0.8.2.0.tgz
 RUN mv kafka_2.10-0.8.2.0 /opt/kafka    
 
